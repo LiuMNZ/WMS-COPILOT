@@ -39,7 +39,7 @@ build/
 ### Mac OS ###
 .DS_Store
 
-### Local secrets (never commit) ###
+### Local overrides / secrets (never commit); application.yml stays in repo with env placeholders ###
 src/main/resources/application-local.yml
 .env
 .env.local
