@@ -39,6 +39,11 @@ build/
 ### Mac OS ###
 .DS_Store
 
+### Local secrets (never commit) ###
+src/main/resources/application-local.yml
+.env
+.env.local
+
 ### Application Logs ###
 *.log
 app.log
