@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -25,6 +26,7 @@ import java.util.Map;
  * 支持 Mock 模式，提供与告警关联的模拟日志数据
  */
 @Component
+@ConditionalOnProperty(prefix = "cls", name = "mock-enabled", havingValue = "true")
 public class QueryLogsTools {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryLogsTools.class);

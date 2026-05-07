@@ -39,26 +39,22 @@ public class VectorEmbeddingService {
     public void init() {
         // 验证 API Key
         if (apiKey == null || apiKey.trim().isEmpty() || apiKey.equals("your-api-key-here")) {
-            logger.error("API Key 未正确配置！当前值: {}", apiKey);
+            logger.error("API Key 未正确配置（未设置、为空或为占位符；日志不输出密钥内容）");
             throw new IllegalStateException("请设置环境变量 DASHSCOPE_API_KEY 或在 application.yml 中配置正确的 API Key");
         }
-        
-        // 打印 API Key 前缀用于调试（不打印完整 Key 保证安全）
-        String maskedKey = apiKey.length() > 8 ? 
-            apiKey.substring(0, 8) + "..." + apiKey.substring(apiKey.length() - 4) : 
-            "***";
-        logger.info("API Key 已加载: {}", maskedKey);
-        
+
+        logger.info("DashScope API Key 已从配置加载（不在日志中输出密钥）");
+
         // 设置全局 API Key（确保设置成功）
         Constants.apiKey = apiKey;
-        
+
         // 验证 API Key 是否设置成功
         if (Constants.apiKey == null || Constants.apiKey.isEmpty()) {
             logger.error("Constants.apiKey 设置失败！");
             throw new IllegalStateException("API Key 设置到 Constants 失败");
         }
-        
-        logger.info("Constants.apiKey 已设置: {}", Constants.apiKey.substring(0, Math.min(8, Constants.apiKey.length())) + "...");
+
+        logger.info("Constants.apiKey 已写入 DashScope 全局配置");
         
         // 创建 TextEmbedding 实例
         textEmbedding = new TextEmbedding();
@@ -88,8 +84,7 @@ public class VectorEmbeddingService {
                 Constants.apiKey = apiKey;
             }
             
-            logger.debug("调用 API 前 Constants.apiKey: {}", 
-                Constants.apiKey != null ? Constants.apiKey.substring(0, Math.min(8, Constants.apiKey.length())) + "..." : "null");
+            logger.debug("调用 API 前 Constants.apiKey 已设置: {}", Constants.apiKey != null && !Constants.apiKey.isEmpty());
 
             // 构建请求参数
             TextEmbeddingParam param = TextEmbeddingParam

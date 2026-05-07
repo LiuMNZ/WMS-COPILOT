@@ -1,0 +1,9 @@
+---
+description: Never push to remote unless the user explicitly asks
+alwaysApply: true
+---
+
+# Git：不要自动 push
+
+- **禁止**在未收到明确指令时执行 `git push`（含推送到 GitHub、`origin` 等）。只有用户明确要求「推送 / push / 推到远程」时才可执行。
+- 完成本地 `commit` 或改代码后，**默认不要**代为 `push`；如需同步远程，可一句提示用户自行执行 `git push`。

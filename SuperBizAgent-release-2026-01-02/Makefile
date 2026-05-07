@@ -5,9 +5,14 @@
 SERVER_URL = http://localhost:9900
 UPLOAD_API = $(SERVER_URL)/api/upload
 DOCS_DIR = aiops-docs
-HEALTH_CHECK_API = $(SERVER_URL)/milvus/health
+# 使用轻量探针（Tomcat 就绪即 200）；/milvus/health 依赖 Milvus RPC，易导致 wait 误判超时
+HEALTH_CHECK_API = $(SERVER_URL)/health/ready
 DOCKER_COMPOSE_FILE = vector-database.yml
 MILVUS_CONTAINER = milvus-standalone
+
+# Maven：make/nohup 子进程的 PATH 常缺少 Homebrew / SDKMAN，导致 “mvn: No such file or directory”
+# 可在命令行覆盖：make start MVN=/opt/homebrew/bin/mvn
+MVN ?= $(shell PATH="$(PATH):/opt/homebrew/bin:/usr/local/bin:$(HOME)/.sdkman/candidates/maven/current/bin" command -v mvn)
 
 # 颜色输出
 GREEN = \033[0;32m
@@ -70,18 +75,28 @@ start:
 	@if curl -s -f $(HEALTH_CHECK_API) > /dev/null 2>&1; then \
 		echo "$(GREEN)✅ 服务已经在运行中 ($(SERVER_URL))$(NC)"; \
 	else \
+		MVN_MAKE="$(MVN)"; export PATH="$$PATH:/opt/homebrew/bin:/usr/local/bin:$(HOME)/.sdkman/candidates/maven/current/bin"; \
+		MVN_CMD="$$MVN_MAKE"; \
+		if [ -z "$$MVN_CMD" ]; then MVN_CMD=$$(command -v mvn 2>/dev/null || true); fi; \
+		if [ -z "$$MVN_CMD" ]; then \
+			echo "$(RED)❌ 未找到 mvn（Maven）。$(NC)"; \
+			echo "$(YELLOW)   安装示例: brew install maven$(NC)"; \
+			echo "$(YELLOW)   或指定: make start MVN=/opt/homebrew/bin/mvn$(NC)"; \
+			exit 1; \
+		fi; \
 		echo "$(YELLOW)📦 正在启动服务（后台运行）...$(NC)"; \
-		nohup mvn spring-boot:run > server.log 2>&1 & \
+		echo "$(YELLOW)   使用 Maven: $$MVN_CMD$(NC)"; \
+		nohup "$$MVN_CMD" spring-boot:run > server.log 2>&1 & \
 		echo $$! > server.pid; \
 		echo "$(GREEN)✅ 服务启动命令已执行$(NC)"; \
 		echo "$(YELLOW)   PID: $$(cat server.pid)$(NC)"; \
 		echo "$(YELLOW)   日志文件: server.log$(NC)"; \
 	fi
 
-# 等待服务器就绪（最多等待 60 秒）
+# 等待服务器就绪（首次 mvn 解析依赖 + 编译可能超过数分钟）
 wait:
 	@echo "$(YELLOW)⏳ 等待服务器就绪...$(NC)"
-	@max_attempts=60; \
+	@max_attempts=300; \
 	attempt=0; \
 	while [ $$attempt -lt $$max_attempts ]; do \
 		if curl -s -f $(HEALTH_CHECK_API) > /dev/null 2>&1; then \
